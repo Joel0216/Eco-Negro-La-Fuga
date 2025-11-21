@@ -122,7 +122,7 @@ class GameProvider extends ChangeNotifier {
 
   void rollDice() {
     if (currentTurn != GameTurn.PLAYER || turnPhase != TurnPhase.ROLLING) return;
-    diceResult = _rng.nextInt(6) + 1;
+    diceResult = _rng.nextInt(4) + 1;
     possibleMoves = calculatePossibleMoves(playerPos, diceResult, maze);
     turnPhase = TurnPhase.MOVING;
     notifyListeners();
@@ -598,23 +598,24 @@ class _GamePageState extends State<GamePage> with SingleTickerProviderStateMixin
   Widget _buildBottomPanel() {
     return Consumer<GameProvider>(builder: (context, g, _) {
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         color: Colors.grey[900],
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Dice
                 Container(
-                  width: 90,
-                  height: 90,
+                  width: 70,
+                  height: 70,
                   decoration: BoxDecoration(color: Colors.grey[850], borderRadius: BorderRadius.circular(8)),
                   child: Center(
                       child: Text(
                       g.diceResult == 0 ? '-' : g.diceResult.toString(),
-                      style: const TextStyle(fontFamily: 'monospace', fontSize: 34, fontWeight: FontWeight.bold, color: Colors.white),
+                      style: const TextStyle(fontFamily: 'monospace', fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white),
                     ),
                   ),
                 ),
@@ -622,20 +623,28 @@ class _GamePageState extends State<GamePage> with SingleTickerProviderStateMixin
                 // Buttons
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         ElevatedButton(
-                          style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            textStyle: const TextStyle(fontSize: 14),
+                          ),
                           onPressed: g.currentTurn == GameTurn.PLAYER && g.turnPhase == TurnPhase.ROLLING ? () { g.rollDice(); setState(() {}); } : null,
-                          child: const Text('Lanzar Dado', style: TextStyle(fontFamily: 'monospace', fontSize: 16, fontWeight: FontWeight.bold)),
+                          child: const Text('Lanzar Dado', style: TextStyle(fontFamily: 'monospace', fontWeight: FontWeight.bold)),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 6),
                         ElevatedButton(
-                          style: ElevatedButton.styleFrom(backgroundColor: Colors.tealAccent.shade700, foregroundColor: Colors.black, padding: const EdgeInsets.symmetric(vertical: 12)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.tealAccent.shade700, 
+                            foregroundColor: Colors.black, 
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            textStyle: const TextStyle(fontSize: 12),
+                          ),
                           onPressed: g.currentTurn == GameTurn.PLAYER && g.echoCharges >= 6 ? () { g.activateEcho(); setState(() {}); } : null,
-                          child: Text('Ecolocalización (${g.echoCharges}/6)', style: const TextStyle(fontFamily: 'monospace', fontSize: 14)),
+                          child: Text('Echo (${g.echoCharges}/6)', style: const TextStyle(fontFamily: 'monospace')),
                         ),
                       ],
                     ),
@@ -643,20 +652,36 @@ class _GamePageState extends State<GamePage> with SingleTickerProviderStateMixin
                 ),
 
                 // Turn/pass info
-                Container(
-                  width: 110,
+                SizedBox(
+                  width: 85,
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Text(g.currentTurn == GameTurn.PLAYER ? 'Turno: Sujeto 7' : 'Turno: Resonancia', style: const TextStyle(fontFamily: 'monospace', fontSize: 12), textAlign: TextAlign.center,),
-                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+                        decoration: BoxDecoration(
+                          color: g.currentTurn == GameTurn.PLAYER ? Colors.tealAccent.shade700 : Colors.redAccent.shade700,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          g.currentTurn == GameTurn.PLAYER ? 'Sujeto 7' : 'Resonancia', 
+                          style: const TextStyle(fontFamily: 'monospace', fontSize: 10, color: Colors.black, fontWeight: FontWeight.bold),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
                       if (g.turnPhase == TurnPhase.MOVING && g.currentTurn == GameTurn.PLAYER)
                         ElevatedButton(
-                          style: ElevatedButton.styleFrom(backgroundColor: Colors.grey[800]),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.grey[800],
+                            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                            textStyle: const TextStyle(fontSize: 10),
+                          ),
                           onPressed: () { g.passTurn(); setState(() {}); },
-                          child: const Text('Pasar Turno', style: TextStyle(fontFamily: 'monospace', fontSize: 12)),
+                          child: const Text('Pasar', style: TextStyle(fontFamily: 'monospace')),
                         )
                       else
-                        SizedBox(height: 36),
+                        const SizedBox(height: 32),
                     ],
                   ),
                 ),
@@ -667,8 +692,25 @@ class _GamePageState extends State<GamePage> with SingleTickerProviderStateMixin
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Ecolocalización: ${g.echoActive ? 'ACTIVA' : 'INACTIVA'}', style: TextStyle(fontFamily: 'monospace', fontSize: 12, color: g.echoActive ? Colors.tealAccent : Colors.white70)),
-                const Text('Fichas visibles: Enemigo & Salida', style: TextStyle(fontFamily: 'monospace', fontSize: 12)),
+                Flexible(
+                  child: Text(
+                    'Echo: ${g.echoActive ? 'ACTIVA' : 'INACTIVA'}', 
+                    style: TextStyle(
+                      fontFamily: 'monospace', 
+                      fontSize: 10, 
+                      color: g.echoActive ? Colors.tealAccent : Colors.white70
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Flexible(
+                  child: Text(
+                    'Fichas: Enemigo & Salida', 
+                    style: TextStyle(fontFamily: 'monospace', fontSize: 10),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
               ],
             )
           ],
